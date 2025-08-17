@@ -113,6 +113,7 @@
   
   let audioStream = null, ctx = null, analyser = null, data = null, raf = 0;
   let candlesOn = new Array(N).fill(true);
+  let isComplete = false;
   const THRESHOLD = 0.06; // fixed mid sensitivity
 
   // Personalize via ?name= & ?age=
@@ -155,6 +156,8 @@
 
   function setCandleState(i,on){ const g=candleLayer.querySelector(`g[data-idx="${i}"]`); if(!g)return; g.querySelector('ellipse').style.opacity=on?1:0; candlesOn[i]=on; }
   function relightAll(){
+    isComplete = false;
+    blowOnSince = 0;
     for(let i=0;i<N;i++) setCandleState(i,true);
     confetti.innerHTML='';
     msg.classList.remove('show');
@@ -186,6 +189,8 @@
     if(card) card.innerHTML = html;
   }
   function finish(){
+    if (isComplete) return;
+    isComplete = true;
     winCount++;
     setMessage(winCount);
     msg.classList.add('show');
@@ -197,8 +202,39 @@
 
   const rmsFromData=a=>{let s=0;for(let i=0;i<a.length;i++){const v=(a[i]-128)/128;s+=v*v;}return Math.sqrt(s/a.length)};
   let blowOnSince=0;
-  function extinguishSome(n){ const left=[]; for(let i=0;i<N;i++) if(candlesOn[i]) left.push(i); for(let k=0;k<n && left.length;k++){ const j=Math.floor(Math.random()*left.length); const idx=left.splice(j,1)[0]; setCandleState(idx,false);} if(candlesOn.every(v=>!v)) finish(); }
-  function loop(){ if(!analyser)return; analyser.getByteTimeDomainData(data); const rms=rmsFromData(data); const now=performance.now(); if(rms>THRESHOLD){ if(!blowOnSince) blowOnSince=now; const dur=now-blowOnSince; if(dur>220){ const n=1+Math.min(6, Math.round((rms-THRESHOLD)*40 + dur/350)); extinguishSome(n); blowOnSince=0; } } else blowOnSince=0; raf=requestAnimationFrame(loop); }
+  function extinguishSome(n){
+    if (isComplete || candlesOn.every(v=>!v)) return;
+    const left=[];
+    for(let i=0;i<N;i++) if(candlesOn[i]) left.push(i);
+    for(let k=0;k<n && left.length;k++){
+      const j=Math.floor(Math.random()*left.length);
+      const idx=left.splice(j,1)[0];
+      setCandleState(idx,false);
+    }
+    if(candlesOn.every(v=>!v)) finish();
+  } if(candlesOn.every(v=>!v)) finish(); }
+  function loop(){
+    if(!analyser) return;
+    analyser.getByteTimeDomainData(data);
+    const rms = rmsFromData(data);
+    const now = performance.now();
+    if(!isComplete){
+      if(rms > THRESHOLD){
+        if(!blowOnSince) blowOnSince = now;
+        const dur = now - blowOnSince;
+        if(dur > 220){
+          const n = 1 + Math.min(6, Math.round((rms - THRESHOLD)*40 + dur/350));
+          extinguishSome(n);
+          blowOnSince = 0;
+        }
+      } else {
+        blowOnSince = 0;
+      }
+    } else {
+      blowOnSince = 0;
+    }
+    raf = requestAnimationFrame(loop);
+  } } else blowOnSince=0; raf=requestAnimationFrame(loop); }
 
   async function startMic(){
     if(location.protocol!=='https:' && location.hostname!=='localhost'){
