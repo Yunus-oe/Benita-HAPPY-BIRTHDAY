@@ -36,8 +36,8 @@
     .msg .card{background:var(--cap);color:#fff;border-radius:18px;padding:18px 20px;max-width:min(620px,90vw);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.18);position:relative}
     .msg .card p{margin:8px 0}
 
-    /* Zähler bis 10 */
-    .counter{position:absolute;top:8px;right:10px;background:rgba(255,255,255,.25);color:#fff;border-radius:999px;padding:4px 8px;font-weight:700;font-size:12px}
+    /* Zähler bis 10 (versteckt) */
+    .counter{display:none !important}
 
     /* Zurück-Button unter dem pinken Textfeld */
     .back{display:none;margin-top:12px;background:#111;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 16px rgba(0,0,0,.12);width:100%;justify-content:center}
@@ -92,9 +92,11 @@
 
     <div class="msg" id="msg">
       <div class="card">
-        <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
-        <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
-        <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
+        <div id="msgContent">
+          <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
+          <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
+          <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
+        </div>
         <button id="backBtn" class="back" title="Nochmal pusten">Nochmal pusten</button>
       </div>
     </div>
@@ -170,7 +172,7 @@
   }  backBtn.addEventListener('click', ()=>{ msg.classList.remove('show');  relightAll(); });
   let winCount = 0;
   function setMessage(n){
-    const card = msg.querySelector('.card');
+    const content = msg.querySelector('#msgContent');
     let html = '';
     const counter = (n <= 10) ? `<div class="counter">${n}/10</div>` : '';
 
@@ -202,7 +204,7 @@
         <p>Nochmal? Frech. Gefällt mir, vielleicht kommt ja noch was</p>
       `;
     }
-    if(card) card.innerHTML = html;
+    if(content) content.innerHTML = html;
   }
   function finish(){
     if (isComplete) return;
