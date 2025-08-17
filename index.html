@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Happy 23 🎂</title>
+  <title>Alles Gute zum 23 🎂</title>
   <style>
     :root{
       --bg:#e9fcff;
@@ -19,6 +19,13 @@
     .topbar{display:flex;justify-content:center;margin:4px 0 0}
     button{border:none;background:#111;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 16px rgba(0,0,0,.12);font-weight:700;cursor:pointer}
     button.secondary{background:#f3f3f3;color:#111}
+
+    /* Spaß‑Mikro-Button */
+    .fun{background:linear-gradient(135deg,#ff7eb3,#ff758c);color:#fff;border:none;position:relative}
+    .fun:after{content:'💨';position:absolute;right:-12px;top:-8px;font-size:18px;animation:float 2.2s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .fun.on{background:#2ecc71}
+    .topbar{gap:8px;flex-wrap:wrap}
 
     .stage{width:min(900px,95vw);display:grid;place-items:center}
     svg{width:100%;height:auto;display:block}
@@ -36,8 +43,8 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Happy 23rd Birthday 🎉</h1>
-    <div class="topbar"><button id="resetBtn" class="secondary">Relight Candles</button></div>
+    <h1>Alles Gute zum 23. Geburtstag 🎉</h1>
+    <div class="topbar"><button id="micBtn" class="fun" title="Tippen & pusten!">🎤 Mikro an – pusten!</button> <button id="resetBtn" class="secondary">Kerzen neu anzünden</button></div>
 
     <div class="stage">
       <svg id="cakeSvg" viewBox="0 0 900 560" aria-label="Birthday cake with 23 candles">
@@ -74,10 +81,11 @@
 
     <div class="msg" id="msg">
       <div class="card">
-        <p>“Hayat kısa, sev, gülümse, mutlu ol.”</p>
-        <p><em>(Life is short — love, smile, be happy.)</em></p>
+        <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
+        <p><em>(Das Leben ist kurz — liebe, lächle, sei glücklich.)</em></p>
         <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</p>
       </div>
+    </div>
     </div>
   </div>
 
@@ -91,6 +99,7 @@
   const capRect = document.getElementById('capRect');
   const wickClipRect = document.getElementById('wickClipRect');
   const resetBtn = document.getElementById('resetBtn');
+  const micBtn = document.getElementById('micBtn');
   const msg = document.getElementById('msg');
   const confetti = document.getElementById('confetti');
 
@@ -103,7 +112,7 @@
   const params = new URLSearchParams(location.search);
   const who = params.get('name');
   const age = parseInt(params.get('age')||'23',10);
-  if(!Number.isNaN(age) && age!==23){document.title = `Happy ${age}`; document.querySelector('h1').textContent = `Happy ${age}th Birthday 🎉`;}
+  if(!Number.isNaN(age) && age!==23){document.title = `Alles Gute zum ${age}.`; document.querySelector('h1').textContent = `Alles Gute zum ${age}. Geburtstag 🎉`;}
   if(who) document.querySelector('h1').textContent += `, ${who}`;
 
   // Helpers
@@ -142,7 +151,7 @@
 
   async function startMic(){
     if(location.protocol!=='https:' && location.hostname!=='localhost'){
-      alert('Open over HTTPS (or localhost) for mic access.');
+      alert('Bitte über HTTPS (oder localhost) öffnen, sonst verweigert der Browser das Mikro.');
       return;
     }
     try{
@@ -156,15 +165,16 @@
       cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
     }catch(err){
       console.error(err);
-      alert('Microphone permission is needed to blow out the candles. Please allow it and reload.');
+      alert('Ich brauche dein Mikro, damit du pusten kannst. Bitte erlauben und danach neu laden.');
     }
   }
 
-  // Start mic on first user gesture anywhere (required by iOS/Chrome)
-  let micStarted = false;
-  const kick = ()=>{ if(!micStarted){ micStarted=true; startMic(); document.removeEventListener('pointerdown', kick); document.removeEventListener('keydown', kick);} };
-  document.addEventListener('pointerdown', kick);
-  document.addEventListener('keydown', kick);
+  // Mikro per lustigem Button starten
+  micBtn.addEventListener('click', async () => {
+    await startMic();
+    micBtn.textContent = '🎤 Mikro an – pusten! ✓';
+    micBtn.classList.add('on');
+  });
 })();
 </script>
 </body>
