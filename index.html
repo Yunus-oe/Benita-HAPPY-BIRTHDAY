@@ -90,7 +90,6 @@
         <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</p>
       </div>
     </div>
-    </div>
   </div>
 
   <button id="backBtn" class="back" title="Zurück zum Kuchen">Zum Kuchen ➜</button>
@@ -154,6 +153,9 @@
 
   placeCandles(); addEventListener('resize', updateWickClip);
 
+  // Sanity-Check: 23 Kerzen vorhanden?
+  const _c = candleLayer.querySelectorAll('g').length; if (_c !== N) console.warn('Kerzen-Anzahl unerwartet:', _c, 'statt', N);
+
   function setCandleState(i,on){ const g=candleLayer.querySelector(`g[data-idx="${i}"]`); if(!g)return; g.querySelector('ellipse').style.opacity=on?1:0; candlesOn[i]=on; }
   function relightAll(){
     isComplete = false;
@@ -212,7 +214,8 @@
       setCandleState(idx,false);
     }
     if(candlesOn.every(v=>!v)) finish();
-  } if(candlesOn.every(v=>!v)) finish(); }
+  }
+
   function loop(){
     if(!analyser) return;
     analyser.getByteTimeDomainData(data);
@@ -234,7 +237,7 @@
       blowOnSince = 0;
     }
     raf = requestAnimationFrame(loop);
-  } } else blowOnSince=0; raf=requestAnimationFrame(loop); }
+  }
 
   async function startMic(){
     if(location.protocol!=='https:' && location.hostname!=='localhost'){
