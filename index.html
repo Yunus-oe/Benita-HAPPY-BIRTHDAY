@@ -23,32 +23,15 @@
     .stage{width:min(900px,95vw);display:grid;place-items:center}
     svg{width:100%;height:auto;display:block}
 
-    .msg{display:none;font-weight:800}
-    .msg.show{display:block}
+    /* Success/message overlay appears only after all candles are out */
+    .msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(233,252,255,.72);z-index:70}
+    .msg.show{display:flex}
+    .msg .card{background:var(--cap);color:#fff;border-radius:18px;padding:18px 20px;max-width:min(620px,90vw);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+    .msg .card p{margin:8px 0}
 
     .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
     .piece{position:absolute;top:-10%;width:10px;height:14px;opacity:.9;animation:fall 2.4s ease-in forwards}
     @keyframes fall{to{transform:translateY(120vh) rotate(540deg);opacity:1}}
-
-    /* --- SIMPLE INTRO (from scratch) --- */
-    #intro{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(233,252,255,.92);backdrop-filter:saturate(1.1) blur(2px);z-index:60}
-.intro-card{display:flex;flex-direction:column;align-items:center;gap:14px}
-.env-box{position:relative;display:inline-block}
-
-/* simple SVG envelope */
-.env-svg{width:clamp(140px,30vw,220px);height:auto;filter:drop-shadow(0 12px 30px rgba(0,0,0,.16));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .2s ease;animation:nudge 3s ease-in-out infinite .6s}
-
-/* flap hinge (small tilt only) */
-#flapWrap{transform-box:fill-box; transform-origin:50% 0%; transition:transform .35s ease-in-out;}
-#intro.opened #flapWrap{transform:rotate(180deg);} 
-
-/* pink note */
-.note{display:none; background:var(--cap); color:#fff; border-radius:16px; padding:16px 18px; box-shadow:0 12px 30px rgba(0,0,0,.16); text-align:center; width:clamp(360px,84vw,640px); line-height:1.35; transform:translateY(8px); opacity:0; margin-bottom:12px} 
-.note::after{display:none}
-#intro.opened .note{display:block; opacity:1; transform:translateY(0); transition:opacity .28s ease, transform .28s ease}
-.note.below::after{display:none}
-    .note button{margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700}
-  @keyframes nudge{0%,80%,100%{transform:translateY(0)}5%{transform:translateY(-3px)}10%{transform:translateY(0)}}
   </style>
 </head>
 <body>
@@ -89,28 +72,14 @@
       </svg>
     </div>
 
-    <div class="msg" id="msg">All candles out — make a wish! ✨</div>
-  </div>
-
-  <!-- SIMPLE INTRO OVERLAY -->
-  <div id="intro" class="intro" aria-label="Open the envelope">
-  <div class="intro-card">
-    <div class="env-box">
-      <svg id="envSvg" class="env-svg" viewBox="0 0 200 140" role="button" tabindex="0" aria-label="Open letter">
-        <rect x="10" y="20" width="180" height="110" rx="14" fill="#ffffff"/>
-        
-        <g id="flapWrap">
-          <path d="M10 20 L100 60 L190 20 Z" fill="#ffffff" stroke="#e6e6e6" stroke-width="2"/>
-        </g>
-      </svg>
-      <div class="note" id="pinkNote">
-        <div>“Hayat kısa, sev, gülümse, mutlu ol.”<br><em>(Life is short — love, smile, be happy.)</em><br><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</div>
-        <button id="toCake" style="margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700">Zum Kuchen 🎂</button>
-        <div id="introErr" style="margin-top:6px;opacity:.8"></div>
+    <div class="msg" id="msg">
+      <div class="card">
+        <p>“Hayat kısa, sev, gülümse, mutlu ol.”</p>
+        <p><em>(Life is short — love, smile, be happy.)</em></p>
+        <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</p>
       </div>
     </div>
   </div>
-</div>
 
   <div class="confetti" id="confetti"></div>
 
@@ -125,13 +94,7 @@
   const msg = document.getElementById('msg');
   const confetti = document.getElementById('confetti');
 
-  // Intro
-  const intro = document.getElementById('intro');
-  const env = document.getElementById('envSvg');
-  const pinkNote = document.getElementById('pinkNote');
-  const toCake = document.getElementById('toCake');
-  const introErr = document.getElementById('introErr');
-
+  
   let audioStream = null, ctx = null, analyser = null, data = null, raf = 0;
   let candlesOn = new Array(N).fill(true);
   const THRESHOLD = 0.06; // fixed mid sensitivity
@@ -178,28 +141,30 @@
   function loop(){ if(!analyser)return; analyser.getByteTimeDomainData(data); const rms=rmsFromData(data); const now=performance.now(); if(rms>THRESHOLD){ if(!blowOnSince) blowOnSince=now; const dur=now-blowOnSince; if(dur>220){ const n=1+Math.min(6, Math.round((rms-THRESHOLD)*40 + dur/350)); extinguishSome(n); blowOnSince=0; } } else blowOnSince=0; raf=requestAnimationFrame(loop); }
 
   async function startMic(){
-    if(location.protocol!=='https:' && location.hostname!=='localhost'){ introErr.textContent='Open over HTTPS (or localhost) for mic access.'; return; }
+    if(location.protocol!=='https:' && location.hostname!=='localhost'){
+      alert('Open over HTTPS (or localhost) for mic access.');
+      return;
+    }
     try{
       audioStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
-      ctx = new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended'){try{await ctx.resume();}catch{}}
-      const src = ctx.createMediaStreamSource(audioStream); analyser = ctx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85; data=new Uint8Array(analyser.fftSize); src.connect(analyser);
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      if(ctx.state==='suspended'){ try{ await ctx.resume(); }catch{} }
+      const src = ctx.createMediaStreamSource(audioStream);
+      analyser = ctx.createAnalyser();
+      analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85; data=new Uint8Array(analyser.fftSize);
+      src.connect(analyser);
       cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
-      intro.style.display='none';
-    }catch(err){ console.error(err); let m='Need microphone access to blow out candles.'; if(err&& (err.name==='NotAllowedError'||err.name==='SecurityError')) m='Microphone permission was blocked. Allow mic in your browser settings, then tap again.'; if(err&&err.name==='NotFoundError') m='No microphone was found on this device.'; introErr.textContent=m; }
+    }catch(err){
+      console.error(err);
+      alert('Microphone permission is needed to blow out the candles. Please allow it and reload.');
+    }
   }
 
-  // Envelope click: rotate flap 180° and reveal note; button starts mic & closes
-  let opened=false;
-  function onEnvelopeClick(){
-    if(opened) return; opened=true;
-    intro.classList.add('opened'); // triggers flap rotation
-    setTimeout(()=>{ try{ toCake.focus(); }catch{} }, 360);
-  }
-  env.addEventListener('click', onEnvelopeClick);
-  env.addEventListener('pointerdown', onEnvelopeClick);
-
-  // Button starts mic and closes overlay
-  if (toCake) toCake.addEventListener('click', startMic);
+  // Start mic on first user gesture anywhere (required by iOS/Chrome)
+  let micStarted = false;
+  const kick = ()=>{ if(!micStarted){ micStarted=true; startMic(); document.removeEventListener('pointerdown', kick); document.removeEventListener('keydown', kick);} };
+  document.addEventListener('pointerdown', kick);
+  document.addEventListener('keydown', kick);
 })();
 </script>
 </body>
