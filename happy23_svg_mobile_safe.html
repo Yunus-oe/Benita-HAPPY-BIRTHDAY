@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy 23 🎂</title>
+  <style>
+    :root{
+      --bg:#e9fcff;
+      --plate1:#8f5be7;
+      --plate2:#6d49cf;
+      --cake:#ffe07a;
+      --cap:#ef7171;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#202020}
+    .wrap{max-width:980px;margin:28px auto;padding:16px;display:flex;flex-direction:column;gap:18px;align-items:center}
+    h1{margin:4px 0 0;font-size:clamp(24px,3.2vw,36px);text-align:center}
+    .lead{opacity:.8;margin:0;text-align:center}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center}
+    button{border:none;background:#111;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 16px rgba(0,0,0,.12);font-weight:700;cursor:pointer}
+    button.secondary{background:#f3f3f3;color:#111}
+    .pill{padding:8px 12px;background:#fff;border-radius:999px;box-shadow:0 3px 10px rgba(0,0,0,.08);display:flex;align-items:center;gap:8px}
+    .meter{width:200px;height:10px;background:#eee;border-radius:10px;overflow:hidden}
+    .meter>div{height:100%;width:0%;background:#7bd88a;transition:width .08s linear}
+
+    .stage{width:min(900px,95vw);display:grid;place-items:center}
+    svg{width:100%;height:auto;display:block;}
+
+    #wave{width:min(920px,95vw);height:140px;background:#fff;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),0 8px 18px rgba(0,0,0,.08)}
+
+    .msg{display:none;font-weight:800}
+    .msg.show{display:block}
+
+    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+    .piece{position:absolute;top:-10%;width:10px;height:14px;opacity:.9;animation:fall 2.4s ease-in forwards}
+    @keyframes fall{to{transform:translateY(120vh) rotate(540deg);opacity:1}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Happy 23rd Birthday 🎉</h1>
+    <p class="lead">Mobile‑safe: candles clipped (only wicks + flames show). Plate is flush and in front.</p>
+
+    <div class="controls">
+      <button id="startBtn">Enable Microphone</button>
+      <button id="resetBtn" class="secondary">Relight Candles</button>
+
+      <div class="pill">
+        Sensitivity
+        <input id="sens" type="range" min="20" max="120" value="60" />
+      </div>
+
+      <div class="pill" title="Live loudness">
+        Loudness
+        <div class="meter"><div id="lvl"></div></div>
+      </div>
+    </div>
+
+    <canvas id="wave"></canvas>
+
+    <div class="stage">
+      <svg id="cakeSvg" viewBox="0 0 900 560" aria-label="Birthday cake with 23 candles clipped above cap and front plate">
+        <defs>
+          <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%">
+            <feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity=".16"/>
+          </filter>
+          <radialGradient id="flameGrad" cx="50%" cy="60%" r="60%">
+            <stop offset="0%" stop-color="#fff7c2"/>
+            <stop offset="55%" stop-color="#ffd35a"/>
+            <stop offset="85%" stop-color="#ff9f1a"/>
+            <stop offset="100%" stop-color="rgba(255,159,26,0)"/>
+          </radialGradient>
+          <linearGradient id="plateGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="var(--plate1)"/>
+            <stop offset="100%" stop-color="var(--plate2)"/>
+          </linearGradient>
+          <!-- clip that reveals only parts ABOVE a dynamic y set in JS -->
+          <clipPath id="wickClip">
+            <rect id="wickClipRect" x="0" y="0" width="900" height="150"></rect>
+          </clipPath>
+        </defs>
+
+        <!-- BACK: Top tier body only -->
+        <g id="tierTopBody" filter="url(#softShadow)">
+          <rect id="topRect" x="310" y="170" width="300" height="90" rx="20" fill="var(--cake)" />
+          <!-- surface guide -->
+          <rect id="topSurface" x="320" y="168" width="280" height="4" fill="transparent"/>
+        </g>
+
+        <!-- Candles apply clip so only wicks+flames above cap's top are visible -->
+        <g id="candleLayer" clip-path="url(#wickClip)"></g>
+
+        <!-- Top cap IN FRONT of candles -->
+        <g id="topCap" filter="url(#softShadow)">
+          <rect id="capRect" x="310" y="152" width="300" height="30" rx="15" fill="var(--cap)" />
+        </g>
+
+        <!-- Middle tier -->
+        <g id="tierMid" filter="url(#softShadow)">
+          <rect x="210" y="240" width="480" height="110" rx="24" fill="var(--cake)" />
+          <rect x="210" y="218" width="480" height="32" rx="16" fill="var(--cap)" />
+        </g>
+
+        <!-- Bottom tier -->
+        <g id="tierBottom" filter="url(#softShadow)">
+          <rect x="120" y="320" width="660" height="140" rx="28" fill="var(--cake)" />
+          <rect x="120" y="296" width="660" height="36" rx="18" fill="var(--cap)" />
+        </g>
+
+        <!-- Plate LAST (front-most) and FLUSH at y=460 -->
+        <g id="plate" transform="translate(90,460)">
+          <rect x="0" y="0" rx="22" ry="22" width="720" height="40" fill="url(#plateGrad)" filter="url(#softShadow)"/>
+          <ellipse cx="360" cy="48" rx="300" ry="12" fill="rgba(0,0,0,.10)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="msg" id="msg">All candles out — make a wish! ✨</div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+<script>
+(() => {
+  const N = 23;
+  const candleLayer = document.getElementById('candleLayer');
+  const topSurface = document.getElementById('topSurface');
+  const capRect = document.getElementById('capRect');
+  const wickClipRect = document.getElementById('wickClipRect');
+
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const lvlEl = document.getElementById('lvl');
+  const sens = document.getElementById('sens');
+  const msg = document.getElementById('msg');
+  const confetti = document.getElementById('confetti');
+  const wave = document.getElementById('wave');
+  const wctx = wave.getContext('2d');
+
+  let audioStream = null, ctx = null, analyser = null, data = null;
+  let raf = 0;
+  let candlesOn = new Array(N).fill(true);
+
+  // Personalize via URL params
+  const params = new URLSearchParams(location.search);
+  const who = params.get('name');
+  const age = parseInt(params.get('age') || '23', 10);
+  if (!Number.isNaN(age) && age !== 23) {
+    document.title = `Happy ${age}`;
+    document.querySelector('h1').textContent = `Happy ${age}th Birthday 🎉`;
+  }
+  if (who) document.querySelector('h1').textContent += `, ${who}`;
+
+  // SVG helper
+  const svgEl = (name, attrs={}) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+    return el;
+  };
+
+  function updateWickClip() {
+    // Set clip height to show only area ABOVE the cap's top edge
+    const capY = parseFloat(capRect.getAttribute('y'));   // top edge of the pink cap
+    wickClipRect.setAttribute('y', 0);
+    wickClipRect.setAttribute('height', capY);
+  }
+
+  function placeCandles() {
+    updateWickClip();
+    candlesOn = new Array(N).fill(true);
+    while (candleLayer.firstChild) candleLayer.removeChild(candleLayer.firstChild);
+
+    const x = parseFloat(topSurface.getAttribute('x'));
+    const y = parseFloat(topSurface.getAttribute('y'));
+    const w = parseFloat(topSurface.getAttribute('width'));
+    const margin = 8;
+    const usable = w - margin*2;
+    const step = usable / (N-1);
+    const baseY = y;
+
+    for (let i=0;i<N;i++) {
+      const cx = x + margin + i*step;
+      const g = svgEl('g', { class:'candle', 'data-idx': i });
+      const h = 44;
+      g.appendChild(svgEl('rect',{x: cx - 5, y: baseY - h, width: 10, height: h, rx: 3, fill:'#ffffff'}));
+      g.appendChild(svgEl('rect',{x: cx-1, y: baseY - h - 8, width:2, height:8, fill:'#5a3d2b', rx:1}));
+      g.appendChild(svgEl('ellipse',{cx: cx, cy: baseY - h - 18, rx: 6.5, ry: 10.5, fill:'url(#flameGrad)'}));
+      candleLayer.appendChild(g);
+    }
+    msg.classList.remove('show');
+  }
+
+  placeCandles();
+  addEventListener('resize', updateWickClip);
+
+  function setCandleState(idx, on) {
+    const g = candleLayer.querySelector(`g[data-idx="${idx}"]`);
+    if (!g) return;
+    const flame = g.querySelector('ellipse');
+    flame.style.opacity = on ? 1 : 0;
+    candlesOn[idx] = on;
+  }
+
+  function relightAll() {
+    for (let i=0;i<N;i++) setCandleState(i, true);
+    confetti.innerHTML = '';
+    msg.classList.remove('show');
+  }
+
+  function finish() { msg.classList.add('show'); burstConfetti(); }
+  resetBtn.addEventListener('click', relightAll);
+
+  function burstConfetti() {
+    confetti.innerHTML = '';
+    const colors = ['#ff7676','#fbd14b','#7cdedc','#7bd88a','#8e7dff'];
+    const pieces = 100;
+    for (let i=0;i<pieces;i++) {
+      const p = document.createElement('div');
+      p.className = 'piece';
+      p.style.left = Math.random()*100 + '%';
+      p.style.background = colors[i % colors.length];
+      p.style.transform = `rotate(${Math.random()*360}deg)`;
+      p.style.animationDelay = (Math.random()*0.6)+'s';
+      confetti.appendChild(p);
+    }
+  }
+
+  // Mic + waveform
+  const fitCanvas = () => {
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+    const rect = wave.getBoundingClientRect();
+    wave.width = Math.floor(rect.width * dpr);
+    wave.height = Math.floor(rect.height * dpr);
+    wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  fitCanvas(); addEventListener('resize', fitCanvas);
+
+  function drawWave() {
+    if (!analyser || !data) return;
+    analyser.getByteTimeDomainData(data);
+    wctx.clearRect(0,0,wave.width,wave.height);
+    const rect = wave.getBoundingClientRect();
+    const width = rect.width, height = rect.height;
+    wctx.beginPath();
+    const step = data.length / width;
+    for (let x=0; x<width; x++) {
+      const v = data[Math.floor(x*step)] / 128.0 - 1.0;
+      const y = height/2 + v * (height*0.42);
+      if (x===0) wctx.moveTo(x, y); else wctx.lineTo(x, y);
+    }
+    wctx.lineWidth = 2;
+    wctx.strokeStyle = '#111';
+    wctx.stroke();
+  }
+
+  function rmsFromData(arr) {
+    let sum=0;
+    for (let i=0;i<arr.length;i++) { const v = (arr[i]-128)/128; sum += v*v; }
+    return Math.sqrt(sum/arr.length);
+  }
+
+  let blowOnSince = 0;
+
+  function extinguishSome(count) {
+    let left = [];
+    for (let i=0;i<N;i++) if (candlesOn[i]) left.push(i);
+    for (let k=0;k<count && left.length;k++) {
+      const j = Math.floor(Math.random()*left.length);
+      const idx = left.splice(j,1)[0];
+      setCandleState(idx, false);
+    }
+    if (candlesOn.every(v=>!v)) finish();
+  }
+
+  function loop() {
+    if (!analyser) return;
+    analyser.getByteTimeDomainData(data);
+    const rms = rmsFromData(data);
+    const loud = Math.min(1, rms * 8);
+    lvlEl.style.width = (loud*100).toFixed(1) + '%';
+
+    const threshold = (parseInt(sens.value, 10) || 60) / 1000;
+    const now = performance.now();
+    if (rms > threshold) {
+      if (!blowOnSince) blowOnSince = now;
+      const dur = now - blowOnSince;
+      if (dur > 220) {
+        const n = 1 + Math.min(6, Math.round((rms - threshold)*40 + dur/350));
+        extinguishSome(n);
+        blowOnSince = 0;
+      }
+    } else blowOnSince = 0;
+
+    drawWave();
+    raf = requestAnimationFrame(loop);
+  }
+
+  startBtn.addEventListener('click', async () => {
+    try {
+      if (!audioStream) {
+        audioStream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = ctx.createMediaStreamSource(audioStream);
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.85;
+        data = new Uint8Array(analyser.fftSize);
+        src.connect(analyser);
+        startBtn.textContent = 'Mic Enabled ✓';
+        cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+      }
+    } catch (err) {
+      alert('Microphone permission is needed. Error: ' + err.message);
+    }
+  });
+})();
+</script>
+</body>
+</html>
