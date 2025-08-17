@@ -7,23 +7,21 @@
   <style>
     :root{
       --bg:#e9fcff;
-      --plate1:#8f5be7;
-      --plate2:#6d49cf;
       --cake:#ffe07a;
       --cap:#ef7171;
+      --plate1:#8f5be7;
+      --plate2:#6d49cf;
+      --ink:#111;
     }
-    html,body{margin:0;padding:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#202020}
+    html,body{margin:0;padding:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
     .wrap{max-width:980px;margin:28px auto;padding:16px;display:flex;flex-direction:column;gap:18px;align-items:center}
     h1{margin:4px 0 0;font-size:clamp(24px,3.2vw,36px);text-align:center}
-    .lead{opacity:.8;margin:0;text-align:center}
-
-    /* Minimal control bar: only relight */
-    .topbar{display:flex;justify-content:center;margin:8px 0 0}
+    .topbar{display:flex;justify-content:center;margin:4px 0 0}
     button{border:none;background:#111;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 16px rgba(0,0,0,.12);font-weight:700;cursor:pointer}
     button.secondary{background:#f3f3f3;color:#111}
 
     .stage{width:min(900px,95vw);display:grid;place-items:center}
-    svg{width:100%;height:auto;display:block;}
+    svg{width:100%;height:auto;display:block}
 
     .msg{display:none;font-weight:800}
     .msg.show{display:block}
@@ -32,89 +30,34 @@
     .piece{position:absolute;top:-10%;width:10px;height:14px;opacity:.9;animation:fall 2.4s ease-in forwards}
     @keyframes fall{to{transform:translateY(120vh) rotate(540deg);opacity:1}}
 
-    /* INTRO overlay with envelope */
-    .intro{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(to top, rgba(233,252,255,.95), rgba(233,252,255,.75));z-index:60}
-    .intro .env-wrap{width:min(520px,92vw);display:flex;flex-direction:column;align-items:center;gap:14px;animation: rise 600ms ease-out both; position: relative;} 
-    @keyframes rise{from{transform:translateY(40px);opacity:.0}to{transform:translateY(0);opacity:1}}
+    /* --- SIMPLE INTRO (from scratch) --- */
+    #intro{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(233,252,255,.92);backdrop-filter:saturate(1.1) blur(2px);z-index:60}
+.intro-card{display:flex;flex-direction:column;align-items:center;gap:14px}
+.env-box{position:relative;display:inline-block}
 
-    .envelope{width:clamp(160px,42vw,260px);height:auto;cursor:pointer;filter:drop-shadow(0 12px 24px rgba(0,0,0,.15));transition:transform .3s ease}
-    .envelope:hover{transform:translateY(-2px)}
+/* simple SVG envelope */
+.env-svg{width:clamp(140px,30vw,220px);height:auto;filter:drop-shadow(0 12px 30px rgba(0,0,0,.16));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .2s ease;animation:nudge 3s ease-in-out infinite .6s}
 
-/* Flap opens on click */
-#flapG{transform-origin:200px 80px;transform-box:fill-box;transition:transform .5s ease}
-.env-wrap.open #flapG{transform:rotate(-180deg)}
+/* flap hinge (small tilt only) */
+#flapWrap{transition:transform .25s ease, opacity .25s ease; will-change: transform, opacity}
+#intro.opened #flapWrap{ /* keep closed on open */ }
 
-/* Pink note slides up from envelope */
-.intro .env-wrap{position:relative;}
-.pinkNote{
-  position:absolute;
-  bottom: calc(100% + 12px);
-  left:50%;
-  transform: translate(-50%, 8px);
-  background: var(--cap);
-  color:#fff;
-  border-radius:14px;
-  padding:14px 16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
-  max-width:min(520px,92vw);
-  text-align:center;
-  opacity:0;
-  pointer-events:none;
-}
-.pinkNote .ptext{margin:0 0 10px;}
-.pinkNote .noteBtn, .pinkNote button{
-  margin-top:6px;
-  background:#fff;
-  color:#111;
-  border:none;
-  border-radius:12px;
-  padding:10px 14px;
-  font-weight:700;
-}
-.pinkNote::after{
-  content:'';
-  position:absolute;
-  bottom:-10px;
-  left:50%;
-  transform:translateX(-50%);
-  border:10px solid transparent;
-  border-top-color: var(--cap);
-}
-.env-wrap.open .pinkNote{
-  opacity:1;
-  transform: translate(-50%, 0);
-  transition: opacity .35s ease, transform .35s ease;
-}
-/* envelope wobble after open */
-@keyframes wobble { 0%{transform:rotate(0)} 20%{transform:rotate(-3deg)} 40%{transform:rotate(2.2deg)} 60%{transform:rotate(-1.4deg)} 80%{transform:rotate(0.8deg)} 100%{transform:rotate(0)} }
-.env-wrap.open .envelope{ animation: wobble 700ms ease-out; }
-
-    /* tiny click badge */
-    .badge{order:-1;margin-bottom:8px;background:var(--cap);color:#fff;border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;box-shadow:0 6px 16px rgba(0,0,0,.12)}
-    .env-wrap.open .badge{opacity:0;transform:translateY(-6px);transition:opacity .2s ease, transform .2s ease;pointer-events:none}
-
-    .letter{opacity:0;transform:translateY(10px);max-height:0;overflow:hidden;transition:opacity .4s ease, transform .4s ease, max-height .4s ease}
-    .env-wrap.open .letter{opacity:1;transform:translateY(0);max-height:340px}
-
-    .note{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.12);text-align:center}
-    .note p{margin:0 0 10px;}
-    .note .tr{font-weight:700}
-    .note .en{opacity:.85}
-
-    .intro .go{margin-top:8px}
-    .tip{margin-top:6px;font-size:12px;opacity:.75}
-    .error{color:#c9342f;font-weight:700}
+/* pink note */
+.note{position:fixed; left:50%; top:0; transform:translate(-50%,8px); width:clamp(320px,80vw,560px); background:var(--cap); color:#fff; border-radius:16px; padding:16px 18px; box-shadow:0 12px 30px rgba(0,0,0,.16); text-align:center; line-height:1.4; font-size:clamp(14px,2.4vw,18px); display:none; opacity:0; transition:transform .30s ease, opacity .30s ease; pointer-events:auto}
+.note::after{display:none}
+.note.show{display:block; opacity:1; transform:translate(-50%,0)}
+.note.below::after{display:none}
+    .note button{margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700}
+  @keyframes nudge{0%,80%,100%{transform:translateY(0)}5%{transform:translateY(-3px)}10%{transform:translateY(0)}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Happy 23rd Birthday 🎉</h1>
-    <p class="lead">Candles sit behind the top cap. Plate is flush and in front.</p>
-
     <div class="topbar"><button id="resetBtn" class="secondary">Relight Candles</button></div>
 
     <div class="stage">
-      <svg id="cakeSvg" viewBox="0 0 900 560" aria-label="Birthday cake with 23 candles clipped above cap and front plate">
+      <svg id="cakeSvg" viewBox="0 0 900 560" aria-label="Birthday cake with 23 candles">
         <defs>
           <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%">
             <feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity=".16"/>
@@ -129,72 +72,44 @@
             <stop offset="0%" stop-color="var(--plate1)"/>
             <stop offset="100%" stop-color="var(--plate2)"/>
           </linearGradient>
-          <!-- clip that reveals only parts ABOVE a dynamic y set in JS -->
-          <clipPath id="wickClip">
-            <rect id="wickClipRect" x="0" y="0" width="900" height="150"></rect>
-          </clipPath>
+          <!-- clip so only wicks/flames above cap show on mobiles -->
+          <clipPath id="wickClip"><rect id="wickClipRect" x="0" y="0" width="900" height="150"/></clipPath>
         </defs>
 
-        <!-- BACK: Top tier body only -->
+        <!-- draw order: top body -> candles -> top cap -> mid -> bottom -> plate (front) -->
         <g id="tierTopBody" filter="url(#softShadow)">
-          <rect id="topRect" x="310" y="170" width="300" height="90" rx="20" fill="var(--cake)" />
-          <!-- surface guide -->
+          <rect id="topRect" x="310" y="170" width="300" height="90" rx="20" fill="var(--cake)"/>
           <rect id="topSurface" x="320" y="168" width="280" height="4" fill="transparent"/>
         </g>
-
-        <!-- Candles apply clip so only wicks+flames above cap's top are visible -->
         <g id="candleLayer" clip-path="url(#wickClip)"></g>
-
-        <!-- Top cap IN FRONT of candles -->
-        <g id="topCap" filter="url(#softShadow)">
-          <rect id="capRect" x="310" y="152" width="300" height="30" rx="15" fill="var(--cap)" />
-        </g>
-
-        <!-- Middle tier -->
-        <g id="tierMid" filter="url(#softShadow)">
-          <rect x="210" y="240" width="480" height="110" rx="24" fill="var(--cake)" />
-          <rect x="210" y="218" width="480" height="32" rx="16" fill="var(--cap)" />
-        </g>
-
-        <!-- Bottom tier -->
-        <g id="tierBottom" filter="url(#softShadow)">
-          <rect x="120" y="320" width="660" height="140" rx="28" fill="var(--cake)" />
-          <rect x="120" y="296" width="660" height="36" rx="18" fill="var(--cap)" />
-        </g>
-
-        <!-- Plate LAST (front-most) and FLUSH at y=460 -->
-        <g id="plate" transform="translate(90,460)">
-          <rect x="0" y="0" rx="22" ry="22" width="720" height="40" fill="url(#plateGrad)" filter="url(#softShadow)"/>
-          <ellipse cx="360" cy="48" rx="300" ry="12" fill="rgba(0,0,0,.10)"/>
-        </g>
+        <g id="topCap" filter="url(#softShadow)"><rect id="capRect" x="310" y="152" width="300" height="30" rx="15" fill="var(--cap)"/></g>
+        <g id="tierMid" filter="url(#softShadow)"><rect x="210" y="240" width="480" height="110" rx="24" fill="var(--cake)"/><rect x="210" y="218" width="480" height="32" rx="16" fill="var(--cap)"/></g>
+        <g id="tierBottom" filter="url(#softShadow)"><rect x="120" y="320" width="660" height="140" rx="28" fill="var(--cake)"/><rect x="120" y="296" width="660" height="36" rx="18" fill="var(--cap)"/></g>
+        <g id="plate" transform="translate(90,460)"><rect x="0" y="0" rx="22" ry="22" width="720" height="40" fill="url(#plateGrad)" filter="url(#softShadow)"/><ellipse cx="360" cy="48" rx="300" ry="12" fill="rgba(0,0,0,.10)"/></g>
       </svg>
     </div>
 
     <div class="msg" id="msg">All candles out — make a wish! ✨</div>
   </div>
 
-  <!-- INTRO overlay: envelope + message + go button -->
-  <div id="intro" class="intro">
-    <div id="envWrap" class="env-wrap">
-      <!-- SVG envelope -->
-      <svg id="envelope" class="envelope" viewBox="0 0 400 280" role="button" tabindex="0" aria-label="Open letter">
-        <!-- back body -->
-        <rect x="40" y="80" width="320" height="180" rx="16" fill="#ffffff"/>
-        <path d="M40,80 L200,170 L360,80" fill="none" stroke="#e6e6e6" stroke-width="2"/>
-        <!-- front flap (rotates on open) -->
-        <g id="flapG">
-          <path id="flap" d="M40,80 L200,20 L360,80 Z" fill="#ffffff" stroke="#e6e6e6" stroke-width="2"/>
+  <!-- SIMPLE INTRO OVERLAY -->
+  <div id="intro" class="intro" aria-label="Open the envelope">
+  <div class="intro-card">
+    <div class="env-box">
+      <svg id="envSvg" class="env-svg" viewBox="0 0 200 140" role="button" tabindex="0" aria-label="Open letter">
+        <rect x="10" y="20" width="180" height="110" rx="14" fill="#ffffff"/>
+        
+        <g id="flapWrap">
+          <path d="M10 20 L100 60 L190 20 Z" fill="#ffffff" stroke="#e6e6e6" stroke-width="2"/>
         </g>
       </svg>
-      <!-- letter content (hidden until envelope opened) -->
-      <div id="pinkNote" class="pinkNote">
-  <div class="ptext">“Hayat kısa, sev, gülümse, mutlu ol.”<br/>
-    <em>(Life is short — love, smile, be happy.)</em><br/>
-    <strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛
+      <div class="note" id="pinkNote">
+        <div>“Hayat kısa, sev, gülümse, mutlu ol.”<br><em>(Life is short — love, smile, be happy.)</em><br><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</div>
+        <button id="toCake" style="margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700">Go to the cake 🎂</button>
+        <div id="introErr" style="margin-top:6px;opacity:.8"></div>
+      </div>
+    </div>
   </div>
-  <button id="toCakeBtn" class="noteBtn">Go to the cake 🎂</button>
-  <div id="introErr" class="tip"></div>
-</div>
 </div>
 
   <div class="confetti" id="confetti"></div>
@@ -210,174 +125,96 @@
   const msg = document.getElementById('msg');
   const confetti = document.getElementById('confetti');
 
-  // Intro elements
+  // Intro
   const intro = document.getElementById('intro');
-  const envWrap = document.getElementById('envWrap');
-  const envelope = document.getElementById('envelope');
-  const toCakeBtn = document.getElementById('toCakeBtn');
+  const env = document.getElementById('envSvg');
+  const pinkNote = document.getElementById('pinkNote');
+  const toCake = document.getElementById('toCake');
   const introErr = document.getElementById('introErr');
 
-  let audioStream = null, ctx = null, analyser = null, data = null;
-  let raf = 0;
+  let audioStream = null, ctx = null, analyser = null, data = null, raf = 0;
   let candlesOn = new Array(N).fill(true);
+  const THRESHOLD = 0.06; // fixed mid sensitivity
 
-  // Fixed mid sensitivity
-  const THRESHOLD = 0.06;
-
-  // Personalize via URL params
+  // Personalize via ?name= & ?age=
   const params = new URLSearchParams(location.search);
   const who = params.get('name');
-  const age = parseInt(params.get('age') || '23', 10);
-  if (!Number.isNaN(age) && age !== 23) {
-    document.title = `Happy ${age}`;
-    document.querySelector('h1').textContent = `Happy ${age}th Birthday 🎉`;
-  }
-  if (who) document.querySelector('h1').textContent += `, ${who}`;
+  const age = parseInt(params.get('age')||'23',10);
+  if(!Number.isNaN(age) && age!==23){document.title = `Happy ${age}`; document.querySelector('h1').textContent = `Happy ${age}th Birthday 🎉`;}
+  if(who) document.querySelector('h1').textContent += `, ${who}`;
 
-  // SVG helper
-  const svgEl = (name, attrs={}) => {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', name);
-    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
-    return el;
-  };
+  // Helpers
+  const svgEl = (n,a={})=>{const e=document.createElementNS('http://www.w3.org/2000/svg',n);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e;};
 
-  function updateWickClip() {
-    const capY = parseFloat(capRect.getAttribute('y'));
-    wickClipRect.setAttribute('y', 0);
-    wickClipRect.setAttribute('height', capY);
-  }
+  function updateWickClip(){ const capY = parseFloat(capRect.getAttribute('y')); wickClipRect.setAttribute('y',0); wickClipRect.setAttribute('height',capY); }
 
-  function placeCandles() {
+  function placeCandles(){
     updateWickClip();
-    candlesOn = new Array(N).fill(true);
-    while (candleLayer.firstChild) candleLayer.removeChild(candleLayer.firstChild);
-
-    const x = parseFloat(topSurface.getAttribute('x'));
-    const y = parseFloat(topSurface.getAttribute('y'));
-    const w = parseFloat(topSurface.getAttribute('width'));
-    const margin = 8;
-    const usable = w - margin*2;
-    const step = usable / (N-1);
-    const baseY = y;
-
-    for (let i=0;i<N;i++) {
-      const cx = x + margin + i*step;
-      const g = svgEl('g', { class:'candle', 'data-idx': i });
-      const h = 44;
-      g.appendChild(svgEl('rect',{x: cx - 5, y: baseY - h, width: 10, height: h, rx: 3, fill:'#ffffff'}));
-      g.appendChild(svgEl('rect',{x: cx-1, y: baseY - h - 8, width:2, height:8, fill:'#5a3d2b', rx:1}));
-      g.appendChild(svgEl('ellipse',{cx: cx, cy: baseY - h - 18, rx: 6.5, ry: 10.5, fill:'url(#flameGrad)'}));
+    candlesOn = new Array(N).fill(true); while(candleLayer.firstChild) candleLayer.removeChild(candleLayer.firstChild);
+    const x = +topSurface.getAttribute('x'), y = +topSurface.getAttribute('y'), w = +topSurface.getAttribute('width');
+    const margin = 8, step = (w - margin*2) / (N-1), baseY = y, h=44;
+    for(let i=0;i<N;i++){
+      const cx = x + margin + i*step, g = svgEl('g',{'data-idx':i});
+      g.appendChild(svgEl('rect',{x:cx-5,y:baseY-h,width:10,height:h,rx:3,fill:'#fff'}));
+      g.appendChild(svgEl('rect',{x:cx-1,y:baseY-h-8,width:2,height:8,fill:'#5a3d2b',rx:1}));
+      g.appendChild(svgEl('ellipse',{cx,cy:baseY-h-18,rx:6.5,ry:10.5,fill:'url(#flameGrad)'}));
       candleLayer.appendChild(g);
     }
     msg.classList.remove('show');
   }
 
-  placeCandles();
-  addEventListener('resize', updateWickClip);
+  placeCandles(); addEventListener('resize', updateWickClip);
 
-  function setCandleState(idx, on) {
-    const g = candleLayer.querySelector(`g[data-idx="${idx}"]`);
-    if (!g) return;
-    const flame = g.querySelector('ellipse');
-    flame.style.opacity = on ? 1 : 0;
-    candlesOn[idx] = on;
-  }
-
-  function relightAll() {
-    for (let i=0;i<N;i++) setCandleState(i, true);
-    confetti.innerHTML = '';
-    msg.classList.remove('show');
-  }
-
-  function finish() { msg.classList.add('show'); burstConfetti(); }
+  function setCandleState(i,on){ const g=candleLayer.querySelector(`g[data-idx="${i}"]`); if(!g)return; g.querySelector('ellipse').style.opacity=on?1:0; candlesOn[i]=on; }
+  function relightAll(){ for(let i=0;i<N;i++) setCandleState(i,true); confetti.innerHTML=''; msg.classList.remove('show'); }
   resetBtn.addEventListener('click', relightAll);
+  function finish(){ msg.classList.add('show'); burstConfetti(); }
 
-  function burstConfetti() {
-    confetti.innerHTML = '';
-    const colors = ['#ff7676','#fbd14b','#7cdedc','#7bd88a','#8e7dff'];
-    const pieces = 100;
-    for (let i=0;i<pieces;i++) {
-      const p = document.createElement('div');
-      p.className = 'piece';
-      p.style.left = Math.random()*100 + '%';
-      p.style.background = colors[i % colors.length];
-      p.style.transform = `rotate(${Math.random()*360}deg)`;
-      p.style.animationDelay = (Math.random()*0.6)+'s';
-      confetti.appendChild(p);
-    }
-  }
+  function burstConfetti(){ confetti.innerHTML=''; const colors=['#ff7676','#fbd14b','#7cdedc','#7bd88a','#8e7dff']; for(let i=0;i<100;i++){const p=document.createElement('div');p.className='piece';p.style.left=Math.random()*100+'%';p.style.background=colors[i%colors.length];p.style.transform=`rotate(${Math.random()*360}deg)`;p.style.animationDelay=(Math.random()*0.6)+'s';confetti.appendChild(p);} }
 
-  function rmsFromData(arr) {
-    let sum=0; for (let i=0;i<arr.length;i++){ const v=(arr[i]-128)/128; sum+=v*v; } return Math.sqrt(sum/arr.length);
-  }
-
-  let blowOnSince = 0;
-
-  function extinguishSome(count) {
-    let left = [];
-    for (let i=0;i<N;i++) if (candlesOn[i]) left.push(i);
-    for (let k=0;k<count && left.length;k++) {
-      const j = Math.floor(Math.random()*left.length);
-      const idx = left.splice(j,1)[0];
-      setCandleState(idx, false);
-    }
-    if (candlesOn.every(v=>!v)) finish();
-  }
-
-  function loop() {
-    if (!analyser) return;
-    analyser.getByteTimeDomainData(data);
-    const rms = rmsFromData(data);
-
-    const now = performance.now();
-    if (rms > THRESHOLD) {
-      if (!blowOnSince) blowOnSince = now;
-      const dur = now - blowOnSince;
-      if (dur > 220) {
-        const n = 1 + Math.min(6, Math.round((rms - THRESHOLD)*40 + dur/350));
-        extinguishSome(n);
-        blowOnSince = 0;
-      }
-    } else blowOnSince = 0;
-
-    raf = requestAnimationFrame(loop);
-  }
+  const rmsFromData=a=>{let s=0;for(let i=0;i<a.length;i++){const v=(a[i]-128)/128;s+=v*v;}return Math.sqrt(s/a.length)};
+  let blowOnSince=0;
+  function extinguishSome(n){ const left=[]; for(let i=0;i<N;i++) if(candlesOn[i]) left.push(i); for(let k=0;k<n && left.length;k++){ const j=Math.floor(Math.random()*left.length); const idx=left.splice(j,1)[0]; setCandleState(idx,false);} if(candlesOn.every(v=>!v)) finish(); }
+  function loop(){ if(!analyser)return; analyser.getByteTimeDomainData(data); const rms=rmsFromData(data); const now=performance.now(); if(rms>THRESHOLD){ if(!blowOnSince) blowOnSince=now; const dur=now-blowOnSince; if(dur>220){ const n=1+Math.min(6, Math.round((rms-THRESHOLD)*40 + dur/350)); extinguishSome(n); blowOnSince=0; } } else blowOnSince=0; raf=requestAnimationFrame(loop); }
 
   async function startMic(){
-    // Secure context check
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-      introErr.innerHTML = '<span class="error">Open over HTTPS (or localhost) for mic access.<\/span>';
-      return;
-    }
+    if(location.protocol!=='https:' && location.hostname!=='localhost'){ introErr.textContent='Open over HTTPS (or localhost) for mic access.'; return; }
     try{
       audioStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
-      if (ctx.state === 'suspended') { try { await ctx.resume(); } catch(e){} }
-      const src = ctx.createMediaStreamSource(audioStream);
-      analyser = ctx.createAnalyser();
-      analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.85; data = new Uint8Array(analyser.fftSize);
-      src.connect(analyser);
-      cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
-      // Close intro overlay
-      intro.style.display = 'none';
-    } catch(err){
-      console.error(err);
-      let m = 'Need microphone access to blow out candles.';
-      if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
-        m = 'Microphone permission was blocked. Enable mic for this site in your browser settings, then tap again.';
-      } else if (err && err.name === 'NotFoundError') {
-        m = 'No microphone was found on this device.';
-      }
-      introErr.innerHTML = '<span class="error">' + m + '<\/span>';
-    }
+      ctx = new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended'){try{await ctx.resume();}catch{}}
+      const src = ctx.createMediaStreamSource(audioStream); analyser = ctx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.85; data=new Uint8Array(analyser.fftSize); src.connect(analyser);
+      cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
+      intro.style.display='none';
+    }catch(err){ console.error(err); let m='Need microphone access to blow out candles.'; if(err&& (err.name==='NotAllowedError'||err.name==='SecurityError')) m='Microphone permission was blocked. Allow mic in your browser settings, then tap again.'; if(err&&err.name==='NotFoundError') m='No microphone was found on this device.'; introErr.textContent=m; }
   }
 
-  // Envelope interactions
-  function openEnvelope(){ envWrap.classList.add('open'); }
-  envelope.addEventListener('click', openEnvelope);
-  envelope.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') openEnvelope(); });
+  // Position the note fixed above (or below) the envelope, wider than the envelope
+  function positionNote(){
+    const r = env.getBoundingClientRect();
+    pinkNote.classList.remove('below','show');
+    pinkNote.style.display = 'block';
+    // Pre-measure height
+    pinkNote.style.left = (r.left + r.width/2) + 'px';
+    pinkNote.style.top = '0px';
+    const nh = pinkNote.offsetHeight;
+    const gap = 12;
+    let top = r.top - nh - gap;
+    if (top < 12) { top = r.bottom + gap; pinkNote.classList.add('below'); }
+    pinkNote.style.top = top + 'px';
+    // animate in
+    requestAnimationFrame(()=> pinkNote.classList.add('show'));
+  }
 
-  toCakeBtn.addEventListener('click', startMic);
+  function openIntro(){
+    if (intro.classList.contains('opened')) return;
+    intro.classList.add('opened');
+    positionNote();
+  }
+  env.addEventListener('click', openIntro);
+  env.addEventListener('pointerdown', openIntro);
+  window.addEventListener('resize', ()=>{ if (intro.classList.contains('opened')) positionNote(); });
+
+  toCake.addEventListener('click', startMic);
 })();
 </script>
 </body>
