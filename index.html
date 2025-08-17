@@ -16,17 +16,14 @@
     .wrap{max-width:980px;margin:28px auto;padding:16px;display:flex;flex-direction:column;gap:18px;align-items:center}
     h1{margin:4px 0 0;font-size:clamp(24px,3.2vw,36px);text-align:center}
     .lead{opacity:.8;margin:0;text-align:center}
-    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center}
+
+    /* Minimal control bar: only relight */
+    .topbar{display:flex;justify-content:center;margin:8px 0 0}
     button{border:none;background:#111;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 16px rgba(0,0,0,.12);font-weight:700;cursor:pointer}
     button.secondary{background:#f3f3f3;color:#111}
-    .pill{padding:8px 12px;background:#fff;border-radius:999px;box-shadow:0 3px 10px rgba(0,0,0,.08);display:flex;align-items:center;gap:8px}
-    .meter{width:200px;height:10px;background:#eee;border-radius:10px;overflow:hidden}
-    .meter>div{height:100%;width:0%;background:#7bd88a;transition:width .08s linear}
 
     .stage{width:min(900px,95vw);display:grid;place-items:center}
     svg{width:100%;height:auto;display:block;}
-
-    #wave{width:min(920px,95vw);height:140px;background:#fff;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),0 8px 18px rgba(0,0,0,.08)}
 
     .msg{display:none;font-weight:800}
     .msg.show{display:block}
@@ -34,29 +31,24 @@
     .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
     .piece{position:absolute;top:-10%;width:10px;height:14px;opacity:.9;animation:fall 2.4s ease-in forwards}
     @keyframes fall{to{transform:translateY(120vh) rotate(540deg);opacity:1}}
+
+    /* Tap-to-start overlay (required for iOS/Chrome autoplay policies) */
+    .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(233,252,255,.85);backdrop-filter:saturate(1.2) blur(2px);z-index:50}
+    .card{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.12);text-align:center;max-width:520px}
+    .card h2{margin:0 0 6px;font-size:18px}
+    .card p{margin:0 0 12px;opacity:.85}
+    .gate .tap{display:inline-block;border-radius:999px;padding:10px 14px;background:#111;color:#fff;font-weight:700}
+    .gate .tip{margin-top:8px;font-size:12px;opacity:.7}
+    .hide{display:none}
+    .error{color:#c9342f;font-weight:700}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Happy 23rd Birthday 🎉</h1>
-    <p class="lead">Mobile‑safe: candles clipped (only wicks + flames show). Plate is flush and in front.</p>
+    <p class="lead">Candles sit behind the top cap. Plate is flush and in front. (Mic starts after a quick tap.)</p>
 
-    <div class="controls">
-      <button id="startBtn">Enable Microphone</button>
-      <button id="resetBtn" class="secondary">Relight Candles</button>
-
-      <div class="pill">
-        Sensitivity
-        <input id="sens" type="range" min="20" max="120" value="60" />
-      </div>
-
-      <div class="pill" title="Live loudness">
-        Loudness
-        <div class="meter"><div id="lvl"></div></div>
-      </div>
-    </div>
-
-    <canvas id="wave"></canvas>
+    <div class="topbar"><button id="resetBtn" class="secondary">Relight Candles</button></div>
 
     <div class="stage">
       <svg id="cakeSvg" viewBox="0 0 900 560" aria-label="Birthday cake with 23 candles clipped above cap and front plate">
@@ -118,6 +110,16 @@
     <div class="msg" id="msg">All candles out — make a wish! ✨</div>
   </div>
 
+  <!-- Mic permission gate -->
+  <div id="gate" class="gate">
+    <div class="card">
+      <h2>Tap to blow out the candles</h2>
+      <p>This quick tap turns on your microphone (required by your browser).</p>
+      <div class="tap" id="tapStart" role="button" tabindex="0">Tap to enable mic</div>
+      <div id="gateErr" class="tip"></div>
+    </div>
+  </div>
+
   <div class="confetti" id="confetti"></div>
 
 <script>
@@ -127,19 +129,20 @@
   const topSurface = document.getElementById('topSurface');
   const capRect = document.getElementById('capRect');
   const wickClipRect = document.getElementById('wickClipRect');
-
-  const startBtn = document.getElementById('startBtn');
   const resetBtn = document.getElementById('resetBtn');
-  const lvlEl = document.getElementById('lvl');
-  const sens = document.getElementById('sens');
   const msg = document.getElementById('msg');
   const confetti = document.getElementById('confetti');
-  const wave = document.getElementById('wave');
-  const wctx = wave.getContext('2d');
+
+  const gate = document.getElementById('gate');
+  const tapStart = document.getElementById('tapStart');
+  const gateErr = document.getElementById('gateErr');
 
   let audioStream = null, ctx = null, analyser = null, data = null;
   let raf = 0;
   let candlesOn = new Array(N).fill(true);
+
+  // Fixed mid sensitivity (same as slider value 60/1000)
+  const THRESHOLD = 0.06;
 
   // Personalize via URL params
   const params = new URLSearchParams(location.search);
@@ -159,8 +162,8 @@
   };
 
   function updateWickClip() {
-    // Set clip height to show only area ABOVE the cap's top edge
-    const capY = parseFloat(capRect.getAttribute('y'));   // top edge of the pink cap
+    // Show only wicks+flames above the cap's top edge
+    const capY = parseFloat(capRect.getAttribute('y'));
     wickClipRect.setAttribute('y', 0);
     wickClipRect.setAttribute('height', capY);
   }
@@ -225,38 +228,8 @@
     }
   }
 
-  // Mic + waveform
-  const fitCanvas = () => {
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio||1));
-    const rect = wave.getBoundingClientRect();
-    wave.width = Math.floor(rect.width * dpr);
-    wave.height = Math.floor(rect.height * dpr);
-    wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  };
-  fitCanvas(); addEventListener('resize', fitCanvas);
-
-  function drawWave() {
-    if (!analyser || !data) return;
-    analyser.getByteTimeDomainData(data);
-    wctx.clearRect(0,0,wave.width,wave.height);
-    const rect = wave.getBoundingClientRect();
-    const width = rect.width, height = rect.height;
-    wctx.beginPath();
-    const step = data.length / width;
-    for (let x=0; x<width; x++) {
-      const v = data[Math.floor(x*step)] / 128.0 - 1.0;
-      const y = height/2 + v * (height*0.42);
-      if (x===0) wctx.moveTo(x, y); else wctx.lineTo(x, y);
-    }
-    wctx.lineWidth = 2;
-    wctx.strokeStyle = '#111';
-    wctx.stroke();
-  }
-
   function rmsFromData(arr) {
-    let sum=0;
-    for (let i=0;i<arr.length;i++) { const v = (arr[i]-128)/128; sum += v*v; }
-    return Math.sqrt(sum/arr.length);
+    let sum=0; for (let i=0;i<arr.length;i++){ const v=(arr[i]-128)/128; sum+=v*v; } return Math.sqrt(sum/arr.length);
   }
 
   let blowOnSince = 0;
@@ -276,43 +249,61 @@
     if (!analyser) return;
     analyser.getByteTimeDomainData(data);
     const rms = rmsFromData(data);
-    const loud = Math.min(1, rms * 8);
-    lvlEl.style.width = (loud*100).toFixed(1) + '%';
 
-    const threshold = (parseInt(sens.value, 10) || 60) / 1000;
     const now = performance.now();
-    if (rms > threshold) {
+    if (rms > THRESHOLD) {
       if (!blowOnSince) blowOnSince = now;
       const dur = now - blowOnSince;
       if (dur > 220) {
-        const n = 1 + Math.min(6, Math.round((rms - threshold)*40 + dur/350));
+        const n = 1 + Math.min(6, Math.round((rms - THRESHOLD)*40 + dur/350));
         extinguishSome(n);
         blowOnSince = 0;
       }
     } else blowOnSince = 0;
 
-    drawWave();
     raf = requestAnimationFrame(loop);
   }
 
-  startBtn.addEventListener('click', async () => {
-    try {
-      if (!audioStream) {
-        audioStream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const src = ctx.createMediaStreamSource(audioStream);
-        analyser = ctx.createAnalyser();
-        analyser.fftSize = 2048;
-        analyser.smoothingTimeConstant = 0.85;
-        data = new Uint8Array(analyser.fftSize);
-        src.connect(analyser);
-        startBtn.textContent = 'Mic Enabled ✓';
-        cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
-      }
-    } catch (err) {
-      alert('Microphone permission is needed. Error: ' + err.message);
+  async function startMic(){
+    // Guard: must be secure context
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      gateErr.innerHTML = '<span class="error">Open over HTTPS (or localhost) for mic access.<\/span>';
+      return;
     }
-  });
+    try{
+      // Request mic in the user gesture
+      audioStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
+
+      // Create/resume audio context inside gesture on iOS/Safari
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') {
+        try { await ctx.resume(); } catch(e) { /* ignore */ }
+      }
+
+      const src = ctx.createMediaStreamSource(audioStream);
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.85; data = new Uint8Array(analyser.fftSize);
+      src.connect(analyser);
+      cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+      gate.classList.add('hide');
+    } catch(err){
+      console.error(err);
+      // Helpful guidance depending on error
+      let m = 'Need microphone access to blow out candles.';
+      if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+        m = 'Microphone permission was blocked. Enable mic for this site in your browser settings, then tap Retry.';
+      } else if (err && err.name === 'NotFoundError') {
+        m = 'No microphone was found on this device.';
+      }
+      gateErr.innerHTML = '<span class="error">' + m + '<\/span>';
+    }
+  }
+
+  // Explicit user gesture only (overlay acts as the gesture)
+  function handleTap(){ startMic(); }
+  tapStart.addEventListener('click', handleTap);
+  tapStart.addEventListener('pointerdown', handleTap);
+  tapStart.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') handleTap(); });
 })();
 </script>
 </body>
