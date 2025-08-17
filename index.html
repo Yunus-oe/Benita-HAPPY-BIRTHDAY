@@ -47,7 +47,11 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Alles Gute zum 23. Geburtstag 🎉</h1>
+    <h1>
+      <span class="de">Alles Gute zum 23. Geburtstag 🎉</span><br>
+      <span class="tr">23. doğum günün kutlu olsun 🎉</span><br>
+      <span class="fr">Joyeux 23<sup>e</sup> anniversaire 🎉</span>
+    </h1>
     <div class="topbar"><button id="micBtn" class="fun" title="Tippen & pusten!">🎤 Mikro an – pusten!</button></div>
 
     <div class="stage">
@@ -181,10 +185,6 @@
     } else if(n===10){
       html = `
         <p>🎉 10 Wünsche... hoffe du hast einen schönen Geburtstag, Benita &lt;3</p>
-      `;
-    }` : '';
-      html = `
-        <p>🎉 10 Wünsche... hoffe du hast einen schönen Geburtstag${displayName}</p>
       `;
     } else {
       html = `
