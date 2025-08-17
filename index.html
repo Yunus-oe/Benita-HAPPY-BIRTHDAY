@@ -36,6 +36,10 @@
     .msg .card{background:var(--cap);color:#fff;border-radius:18px;padding:18px 20px;max-width:min(620px,90vw);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.18)}
     .msg .card p{margin:8px 0}
 
+    /* Rechts schwebender Zurück-Button */
+    .back{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:none;align-items:center;gap:6px;background:#111;color:#fff;border-radius:999px;padding:10px 14px;box-shadow:0 6px 16px rgba(0,0,0,.12);z-index:80}
+    .back.show{display:flex}
+
     .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
     .piece{position:absolute;top:-10%;width:10px;height:14px;opacity:.9;animation:fall 2.4s ease-in forwards}
     @keyframes fall{to{transform:translateY(120vh) rotate(540deg);opacity:1}}
@@ -89,6 +93,8 @@
     </div>
   </div>
 
+  <button id="backBtn" class="back" title="Zurück zum Kuchen">Zum Kuchen ➜</button>
+
   <div class="confetti" id="confetti"></div>
 
 <script>
@@ -102,6 +108,7 @@
   const micBtn = document.getElementById('micBtn');
   const msg = document.getElementById('msg');
   const confetti = document.getElementById('confetti');
+  const backBtn = document.getElementById('backBtn');
 
   
   let audioStream = null, ctx = null, analyser = null, data = null, raf = 0;
@@ -112,8 +119,17 @@
   const params = new URLSearchParams(location.search);
   const who = params.get('name');
   const age = parseInt(params.get('age')||'23',10);
-  if(!Number.isNaN(age) && age!==23){document.title = `Alles Gute zum ${age}.`; document.querySelector('h1').textContent = `Alles Gute zum ${age}. Geburtstag 🎉`;}
-  if(who) document.querySelector('h1').textContent += `, ${who}`;
+  const h1 = document.querySelector('h1');
+  function setHeading(a, w){
+    const ageSafe = Number.isNaN(a) ? 23 : a;
+    const de = `Alles Gute zum ${ageSafe}. Geburtstag 🎉` + (w ? `, ${w}` : '');
+    const tr = `${ageSafe}. doğum günün kutlu olsun 🎉`;
+    const fr = `Joyeux ${ageSafe}<sup>e</sup> anniversaire 🎉`;
+    h1.innerHTML = `${de}<br>${tr}<br>${fr}`;
+    document.title = `Alles Gute zum ${ageSafe}.`;
+  }
+  setHeading(age, who);
+  
 
   // Helpers
   const svgEl = (n,a={})=>{const e=document.createElementNS('http://www.w3.org/2000/svg',n);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e;};
@@ -138,9 +154,44 @@
   placeCandles(); addEventListener('resize', updateWickClip);
 
   function setCandleState(i,on){ const g=candleLayer.querySelector(`g[data-idx="${i}"]`); if(!g)return; g.querySelector('ellipse').style.opacity=on?1:0; candlesOn[i]=on; }
-  function relightAll(){ for(let i=0;i<N;i++) setCandleState(i,true); confetti.innerHTML=''; msg.classList.remove('show'); }
+  function relightAll(){
+    for(let i=0;i<N;i++) setCandleState(i,true);
+    confetti.innerHTML='';
+    msg.classList.remove('show');
+    backBtn.classList.remove('show');
+  }
   resetBtn.addEventListener('click', relightAll);
-  function finish(){ msg.classList.add('show'); burstConfetti(); }
+  backBtn.addEventListener('click', ()=>{ msg.classList.remove('show'); backBtn.classList.remove('show'); relightAll(); });
+  let winCount = 0;
+  function setMessage(n){
+    const card = msg.querySelector('.card');
+    let html = '';
+    if(n===1){
+      html = `
+        <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
+        <p><em>(Das Leben ist kurz — liebe, lächle, sei glücklich.)</em></p>
+        <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</p>
+      `;
+    } else if(n===2){
+      html = `
+        <p>✨ Noch ein Wunsch frei!</p>
+        <p>Du bekommst sogar einen <strong>zweiten Wunsch</strong> – ich kann’s kaum abwarten, bis du zurück bist. 😄</p>
+      `;
+    } else {
+      html = `
+        <p>🎁 Wunsch Nr. ${n}!</p>
+        <p>Du sammelst Wünsche wie Sticker – weiter so. 🤭</p>
+      `;
+    }
+    if(card) card.innerHTML = html;
+  }
+  function finish(){
+    winCount++;
+    setMessage(winCount);
+    msg.classList.add('show');
+    backBtn.classList.add('show');
+    burstConfetti();
+  }
 
   function burstConfetti(){ confetti.innerHTML=''; const colors=['#ff7676','#fbd14b','#7cdedc','#7bd88a','#8e7dff']; for(let i=0;i<100;i++){const p=document.createElement('div');p.className='piece';p.style.left=Math.random()*100+'%';p.style.background=colors[i%colors.length];p.style.transform=`rotate(${Math.random()*360}deg)`;p.style.animationDelay=(Math.random()*0.6)+'s';confetti.appendChild(p);} }
 
