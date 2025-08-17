@@ -39,13 +39,13 @@
 .env-svg{width:clamp(140px,30vw,220px);height:auto;filter:drop-shadow(0 12px 30px rgba(0,0,0,.16));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .2s ease;animation:nudge 3s ease-in-out infinite .6s}
 
 /* flap hinge (small tilt only) */
-#flapWrap{transition:transform .25s ease, opacity .25s ease; will-change: transform, opacity}
-#intro.opened #flapWrap{ /* keep closed on open */ }
+#flapWrap{transform-box:fill-box; transform-origin:50% 0%; transition:transform .35s ease-in-out;}
+#intro.opened #flapWrap{transform:rotate(180deg);} 
 
 /* pink note */
-.note{position:fixed; left:50%; top:0; transform:translate(-50%,8px); width:clamp(320px,80vw,560px); background:var(--cap); color:#fff; border-radius:16px; padding:16px 18px; box-shadow:0 12px 30px rgba(0,0,0,.16); text-align:center; line-height:1.4; font-size:clamp(14px,2.4vw,18px); display:none; opacity:0; transition:transform .30s ease, opacity .30s ease; pointer-events:auto}
+.note{display:none; background:var(--cap); color:#fff; border-radius:16px; padding:16px 18px; box-shadow:0 12px 30px rgba(0,0,0,.16); text-align:center; width:clamp(360px,84vw,640px); line-height:1.35; transform:translateY(8px); opacity:0; margin-bottom:12px} 
 .note::after{display:none}
-.note.show{display:block; opacity:1; transform:translate(-50%,0)}
+#intro.opened .note{display:block; opacity:1; transform:translateY(0); transition:opacity .28s ease, transform .28s ease}
 .note.below::after{display:none}
     .note button{margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700}
   @keyframes nudge{0%,80%,100%{transform:translateY(0)}5%{transform:translateY(-3px)}10%{transform:translateY(0)}}
@@ -105,7 +105,7 @@
       </svg>
       <div class="note" id="pinkNote">
         <div>“Hayat kısa, sev, gülümse, mutlu ol.”<br><em>(Life is short — love, smile, be happy.)</em><br><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</div>
-        <button id="toCake" style="margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700">Go to the cake 🎂</button>
+        <button id="toCake" style="margin-top:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:700">Zum Kuchen 🎂</button>
         <div id="introErr" style="margin-top:6px;opacity:.8"></div>
       </div>
     </div>
@@ -188,33 +188,18 @@
     }catch(err){ console.error(err); let m='Need microphone access to blow out candles.'; if(err&& (err.name==='NotAllowedError'||err.name==='SecurityError')) m='Microphone permission was blocked. Allow mic in your browser settings, then tap again.'; if(err&&err.name==='NotFoundError') m='No microphone was found on this device.'; introErr.textContent=m; }
   }
 
-  // Position the note fixed above (or below) the envelope, wider than the envelope
-  function positionNote(){
-    const r = env.getBoundingClientRect();
-    pinkNote.classList.remove('below','show');
-    pinkNote.style.display = 'block';
-    // Pre-measure height
-    pinkNote.style.left = (r.left + r.width/2) + 'px';
-    pinkNote.style.top = '0px';
-    const nh = pinkNote.offsetHeight;
-    const gap = 12;
-    let top = r.top - nh - gap;
-    if (top < 12) { top = r.bottom + gap; pinkNote.classList.add('below'); }
-    pinkNote.style.top = top + 'px';
-    // animate in
-    requestAnimationFrame(()=> pinkNote.classList.add('show'));
+  // Envelope click: rotate flap 180° and reveal note; button starts mic & closes
+  let opened=false;
+  function onEnvelopeClick(){
+    if(opened) return; opened=true;
+    intro.classList.add('opened'); // triggers flap rotation
+    setTimeout(()=>{ try{ toCake.focus(); }catch{} }, 360);
   }
+  env.addEventListener('click', onEnvelopeClick);
+  env.addEventListener('pointerdown', onEnvelopeClick);
 
-  function openIntro(){
-    if (intro.classList.contains('opened')) return;
-    intro.classList.add('opened');
-    positionNote();
-  }
-  env.addEventListener('click', openIntro);
-  env.addEventListener('pointerdown', openIntro);
-  window.addEventListener('resize', ()=>{ if (intro.classList.contains('opened')) positionNote(); });
-
-  toCake.addEventListener('click', startMic);
+  // Button starts mic and closes overlay
+  if (toCake) toCake.addEventListener('click', startMic);
 })();
 </script>
 </body>
