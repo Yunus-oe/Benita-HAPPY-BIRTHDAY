@@ -48,11 +48,11 @@
 <body>
   <div class="wrap">
     <h1>
-      <span class="de">Alles Gute zum 23 Geburtstag 🎉</span><br>
-      <span class="tr">23 doğum günün kutlu olsun 🎉</span><br>
+      <span class="de">Alles Gute zum 23. Geburtstag 🎉</span><br>
+      <span class="tr">23. doğum günün kutlu olsun 🎉</span><br>
       <span class="fr">Joyeux 23<sup>e</sup> anniversaire 🎉</span>
     </h1>
-    <div class="topbar"><button id="micBtn" class="fun" title="Tippen & pusten!">🎤 Mikro an, pusten!(ins Mikro,3) </button></div>
+    <div class="topbar"><button id="micBtn" class="fun" title="Tippen & pusten (ins Mikrofon)!">🎤 Mikro an – pusten (ins Mikrofon)!</button></div>
 
     <div class="stage">
       <svg id="cakeSvg" viewBox="0 0 900 560" aria-label="Birthday cake with 23 candles">
@@ -89,9 +89,9 @@
 
     <div class="msg" id="msg">
       <div class="card">
-        <p>„Hayat kısa, sev, gülümse, mutlu ol <3 “</p>
-        <p><em>(Das Leben ist kurz — liebe, lächle, sei glücklich <3)</em></p>
-        <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong></p>
+        <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
+        <p><em>(Das Leben ist kurz — liebe, lächle, sei glücklich.)</em></p>
+        <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥.</strong> 💛</p>
         <button id="backBtn" class="back" title="Zum Kuchen zurück">Zum Kuchen ➜</button>
       </div>
     </div>
@@ -179,12 +179,12 @@
       `;
     } else if(n===2){
       html = `
-        <p>✨Noch ein Wunsch...</p>
-        <p>Du bekommst einen <strong>zweiten Wunsch</strong>, ich kann’s kaum abwarten, bis du zurück bist. 😄</p>
+        <p>✨ Noch ein Wunsch frei!</p>
+        <p>Du bekommst sogar einen <strong>zweiten Wunsch</strong> – ich kann’s kaum abwarten, bis du zurück bist. 😄</p>
       `;
     } else if(n===10){
       html = `
-        <p>🎉 10 Wünsche... hoffe du hast einen genau so schönen Geburtstag wie du, Benita &lt;3</p>
+        <p>🎉 10 Wünsche... hoffe du hast einen schönen Geburtstag, Benita &lt;3</p>
       `;
     } else {
       html = `
@@ -265,7 +265,7 @@
   // Mikro per lustigem Button starten
   micBtn.addEventListener('click', async () => {
     await startMic();
-    micBtn.textContent = '🎤 Mikro an – pusten! ✓';
+    micBtn.textContent = '🎤 Mikro an – pusten (ins Mikrofon) ✓';
     micBtn.classList.add('on');
   });
 })();
