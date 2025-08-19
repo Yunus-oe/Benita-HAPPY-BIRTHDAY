@@ -170,47 +170,19 @@
     msg.classList.remove('show');
     
   }  backBtn.addEventListener('click', ()=>{ msg.classList.remove('show');  relightAll(); });
-  let winCount = 0;
-  function setMessage(n){
+  function setMessage(){
     const content = msg.querySelector('#msgContent');
-    let html = '';
-    const counter = (n <= 10) ? `<div class="counter">${n}/10</div>` : '';
-
-    if(n===1){
-      html = `
-        ${counter}
-        <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
-        <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
-        <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
-      `;
-    } else if(n===2){
-      html = `
-        ${counter}
-        <p>✨ Noch ein Wunsch frei!</p>
-        <p>Ich kann’s kaum abwarten, dich wieder zu sehen.</p>
-      `;
-    } else if(n===5){
-      html = `
-        ${counter}
-        <p>🎉 5 Wünsche... ich hoffe du hast einen genauso besonderen Geburtstag wie du, Benita &lt;3</p>
-      `;
-    } else if(n>5){
-      html = `
-        <p>Noch ein Wunsch frei</p>
-      `;
-    } else {
-      html = `
-        ${counter}
-        <p>Nochmal? Frech. Gefällt mir, vielleicht kommt ja noch was</p>
-      `;
-    }
+    const html = `
+      <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
+      <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
+      <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
+    `;
     if(content) content.innerHTML = html;
   }
   function finish(){
     if (isComplete) return;
     isComplete = true;
-    winCount++;
-    setMessage(winCount);
+    setMessage();
     msg.classList.add('show');
     
     burstConfetti();
