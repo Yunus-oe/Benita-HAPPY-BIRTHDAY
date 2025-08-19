@@ -95,11 +95,7 @@
 
     <div class="msg" id="msg">
       <div class="card">
-        <div id="msgContent">
-          <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
-          <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
-          <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
-        </div>
+        <div id="msgContent"></div>
         <button id="backBtn" class="back" title="Nochmal pusten">Nochmal pusten</button>
       </div>
     </div>
@@ -107,7 +103,13 @@
   <div class="confetti" id="confetti"></div>
 
 <script>
-(() => {
+(()=> {
+  // Single source of truth for the overlay message (always the same)
+  const MESSAGE_HTML = `
+      <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
+      <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
+      <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
+  `;
   const N = 23;
   const candleLayer = document.getElementById('candleLayer');
   const topSurface = document.getElementById('topSurface');
@@ -175,12 +177,7 @@
   }  backBtn.addEventListener('click', ()=>{ msg.classList.remove('show');  relightAll(); });
   function setMessage(){
     const content = msg.querySelector('#msgContent');
-    const html = `
-      <p>„Hayat kısa, sev, gülümse, mutlu ol.“</p>
-      <p><em>(Das Leben ist kurz liebe, lächle, sei glücklich.)</em></p>
-      <p><strong>Alles Gute zum Geburtstag, Benita 🔮👑🧜🏼‍♀️🐥</strong></p>
-    `;
-    if(content) content.innerHTML = html;
+    if(content) content.innerHTML = MESSAGE_HTML;
   }
   function finish(){
     if (isComplete) return;
